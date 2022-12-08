@@ -7,6 +7,8 @@ import android.text.TextUtils
 import android.view.Menu
 import android.view.MenuItem
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.android.synthetic.main.activity_detay.*
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_not_kayit.*
@@ -14,16 +16,19 @@ import kotlinx.android.synthetic.main.activity_not_kayit.*
 class DetayActivity : AppCompatActivity() {
 
     private lateinit var not:Notlar
-    private lateinit var vt:VeritabaniYardimcisi
+    private lateinit var refNotlar : DatabaseReference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_detay)
 
-        vt = VeritabaniYardimcisi(this)
+
 
         toolbarNotDetay.title = "Not Detay"
         setSupportActionBar(toolbarNotDetay)
+
+        val db = FirebaseDatabase.getInstance()
+        refNotlar = db.getReference("notlar")
 
         not = intent.getSerializableExtra("nesne") as Notlar
 
@@ -46,7 +51,7 @@ class DetayActivity : AppCompatActivity() {
                 Snackbar.make(toolbarNotDetay,"Silinsin mi?",Snackbar.LENGTH_SHORT)
                         .setAction("Evet"){
 
-                            Notlardao().notSil(vt,not.not_id)
+                            refNotlar.child(not.not_id!!).removeValue()
 
                             startActivity(Intent(this@DetayActivity,MainActivity::class.java))
                         finish()
@@ -75,7 +80,12 @@ class DetayActivity : AppCompatActivity() {
                     return false
                 }
 
-                Notlardao().notGuncelle(vt,ders_adi,not1.toInt(),not2.toInt(),not.not_id)
+                val bilgiler = HashMap<String,Any>()
+                bilgiler.put("ders_adi",ders_adi)
+                bilgiler.put("not1",not1.toInt())
+                bilgiler.put("not2",not2.toInt())
+
+                refNotlar.child(not.not_id!!).updateChildren(bilgiler)
 
                 startActivity(Intent(this@DetayActivity,MainActivity::class.java))
                 finish()
